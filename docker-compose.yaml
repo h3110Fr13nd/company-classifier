@@ -1,0 +1,25 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: listen-bravo
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-listen_bravo}:${POSTGRES_PASSWORD:-pg_password}@db:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-pg_db}
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    depends_on:
+      - db
+  db:
+    image: postgres:alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-listen_bravo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pg_password}
+      POSTGRES_DB: ${POSTGRES_DB:-pg_db}
+    ports:
+      - "${POSTGRES_PORT:-5432-5442}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
