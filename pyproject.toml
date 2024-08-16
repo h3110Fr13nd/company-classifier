@@ -1,24 +1,26 @@
 [tool.poetry]
-name = "listen_bravo_test"
+name = "company-classifier"
 version = "0.1.0"
-description = "A FastAPI project for processing CSV files and classifying companies"
-authors = ["Vijay Singh Kushwaha"]
+description = "A simple project to streamline the MLOps for a task to identify the company's details from CSV classify it and save it to SQL based DB."
+authors = ["h3110Fr13nd <vijaysinghkushwaha3737@gmail.com>"]
+readme = "README.md"
+package-mode = false
 
 [tool.poetry.dependencies]
-python = "^3.9"
-fastapi = "^0.68.0"
-uvicorn = "^0.15.0"
-sqlalchemy = "^1.4.23"
-python-multipart = "^0.0.5"
-langchain = "^0.0.150"
-openai = "^0.27.0"
-python-dotenv = "^0.19.0"
-psycopg2-binary = "^2.9.1"
+python = "^3.12"
+langchain-community = "^0.2.12"
+fastapi = "^0.112.0"
+langchain-groq = "^0.1.9"
+python-dotenv = "^1.0.1"
+uvicorn = "^0.30.6"
+langchain-google-genai = "^1.0.8"
+psycopg2-binary = "^2.9.9"
+pandas = "^2.2.2"
+python-multipart = "^0.0.9"
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^6.2.5"
 pre-commit = "^3.8.0"
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
