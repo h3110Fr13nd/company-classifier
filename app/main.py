@@ -24,8 +24,14 @@ async def upload_csv(file: UploadFile = File(...), db: Session = Depends(get_db)
     result = db.execute(text("SELECT * FROM companies"))
     rows = result.fetchall()
     column_names = result.keys()
-    data = [dict(zip(column_names, row)) for row in rows]
-    return data
+    company_data = [dict(zip(column_names, row)) for row in rows]
+    return {
+        "count": len(company_data),
+        "data": company_data,
+        "message": "Data successfully uploaded",
+        "status": "success",
+        "status_code": 200,
+    }
 
 
 if __name__ == "__main__":

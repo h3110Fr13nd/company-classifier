@@ -4,16 +4,8 @@ from typing import List
 
 import pandas as pd
 from dotenv import load_dotenv
-from langchain.chains.sql_database.query import create_sql_query_chain
 from langchain.output_parsers.boolean import BooleanOutputParser
-from langchain_community.agent_toolkits.sql.toolkit import SQLDatabaseToolkit
-from langchain_community.tools.sql_database.tool import (
-    BaseSQLDatabaseTool,
-    InfoSQLDatabaseTool,
-    ListSQLDatabaseTool,
-    QuerySQLCheckerTool,
-    QuerySQLDataBaseTool,
-)
+from langchain_community.tools.sql_database.tool import QuerySQLDataBaseTool
 from langchain_community.utilities.sql_database import SQLDatabase
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_google_genai import GoogleGenerativeAI
@@ -51,16 +43,14 @@ llm = GoogleGenerativeAI(
 boolean_output_parser = BooleanOutputParser()
 json_output_parser = JsonOutputParser()
 
-execute_query = QuerySQLDataBaseTool(db=db)
-# write_query = create_sql_query_chain(llm, db, prompt=few_shot_sql_column_addition_prompt)
-
 classification_chain = (
     few_shot_tech_company_classifier_prompt | llm | boolean_output_parser
 )
 columns_mapping_chain = few_shot_column_mapping_prompt | llm | json_output_parser
-# incremental_column_addition_chain = write_query | execute_query
-# incremental_column_addition_chain = few_shot_sql_column_addition_prompt | llm | execute_query
-incremental_column_addition_chain = few_shot_sql_column_addition_prompt | llm
+execute_query = QuerySQLDataBaseTool(db=db)
+incremental_column_addition_chain = (
+    few_shot_sql_column_addition_prompt | llm | execute_query
+)
 
 
 async def call_llm(df: pd.DataFrame) -> pd.DataFrame:
@@ -93,27 +83,25 @@ async def call_llm(df: pd.DataFrame) -> pd.DataFrame:
             column_mappings = await columns_mapping_chain.ainvoke(
                 {"df1": original_df_dict, "df2": new_df_dict}
             )
-            print(column_mappings)
             non_mapped_columns = []
-
             for col in column_mappings:
                 if not column_mappings[col]:
                     non_mapped_columns.append(col)
                 else:
                     df.rename(columns={col: column_mappings[col]}, inplace=True)
-            print(non_mapped_columns)
             if non_mapped_columns:
                 non_mapped_df_dict = (
                     df[non_mapped_columns].head(5).to_dict(orient="list")
                 )
-                print(non_mapped_df_dict)
-                str_non_mapped_dict = json.dumps(non_mapped_df_dict)
-                print(str_non_mapped_dict)
-                print("BEFORE INVOKE")
-                out = incremental_column_addition_chain.invoke(
-                    {"columns": str_non_mapped_dict, "schema": "companies"}
+                str_non_mapped_cols_dict = json.dumps(non_mapped_df_dict)
+                incremental_column_addition_chain.invoke(
+                    {"columns": str_non_mapped_cols_dict, "schema": "companies"}
                 )
-                print(out, "OUT +++++++++++++++++")
+            company_table_df = pd.read_sql_table(
+                "companies", con=os.environ.get("DATABASE_URL")
+            )[df.columns]
+            # if row already exists, do not add it
+            df = df[~df.isin(company_table_df.to_dict(orient="list")).all(1)]
             df.to_sql(
                 "companies",
                 con=os.environ.get("DATABASE_URL"),

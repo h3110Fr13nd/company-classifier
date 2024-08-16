@@ -1,6 +1,9 @@
 import json
 
-examples = [
+from langchain_core.prompts.few_shot import FewShotPromptTemplate
+from langchain_core.prompts.prompt import PromptTemplate
+
+classification_examples = [
     {
         "metadata_fields": "- Name: TechCorp Inc.\n- Industry: Software",
         "description": "A company that develops and sells cloud-based software solutions for enterprise resource planning and customer relationship management.",
@@ -33,8 +36,6 @@ examples = [
     },
 ]
 
-from langchain_core.prompts.few_shot import FewShotPromptTemplate
-from langchain_core.prompts.prompt import PromptTemplate
 
 tech_company_classifier_prompt = PromptTemplate(
     input_variables=["metadata_fields", "description", "response"],
@@ -48,7 +49,7 @@ Response: {response}""",
 
 
 few_shot_tech_company_classifier_prompt = FewShotPromptTemplate(
-    examples=examples,
+    examples=classification_examples,
     example_prompt=tech_company_classifier_prompt,
     prefix="""You are an expert in categorizing companies based on their descriptions. Given a company's description and additional contextual metadata, your task is to determine if it is a tech company or not.
 
@@ -60,37 +61,37 @@ Here are some examples:""",
 
 column_mapping_examples = [
     {
-        "df1": f"""{"{"+json.dumps({
+        "df1": f"""{"{" + json.dumps({
             "Customer_ID": [1, 2, 3],
             "First_Name": ["John", "Jane", "Doe"],
             "Last_Name": ["Smith", "Doe", "Johnson"],
             "Email": ["john.smith@example.com", "jane.doe@example.com", "doe.johnson@example.com"]
-        }, indent=4)+"}"}""",
-        "df2": f"""{"{"+json.dumps({
+        }, indent=4) + "}"}""",
+        "df2": f"""{"{" + json.dumps({
             "Client_ID": [1, 2, 3],
             "Given_Name": ["John", "Jane", "Doe"],
             "Surname": ["Smith", "Doe", "Johnson"],
             "Contact_Email": ["john.smith@example.com", "jane.doe@example.com", "doe.johnson@example.com"]
-        }, indent=4)+"}"}""",
-        "output": f"""{"{"+json.dumps({
+        }, indent=4) + "}"}""",
+        "output": f"""{"{" + json.dumps({
             "Client_ID": "Customer_ID",
             "Given_Name": "First_Name",
             "Surname": "Last_Name",
             "Contact_Email": "Email"
-        }, indent=4)+"}"}""",
+        }, indent=4) + "}"}""",
     },
     {
-        "df1": f"""{"{"+json.dumps({
+        "df1": f"""{"{" + json.dumps({
             "Order_ID": [101, 102, 103],
             "Product": ["Laptop", "Phone", "Tablet"],
             "Price": [1000, 500, 300]
-        },indent=4)+"}"}""",
-        "df2": f"""{"{"+json.dumps({
+        }, indent=4) + "}"}""",
+        "df2": f"""{"{" + json.dumps({
             "OrderNumber": [101, 104, 105],
             "Item_Name": ["Laptop", "Smartwatch", "Phone"],
             "Cost": [1000, 200, 500]
-        },indent=4)+"}"}""",
-        "output": f"""{"{"+json.dumps({
+        }, indent=4) + "}"}""",
+        "output": f"""{"{" + json.dumps({
             "OrderNumber": "Order_ID",
             "Item_Name": None,
             "Cost": "Price"
@@ -130,14 +131,14 @@ Output:
 """,
     input_variables=["df1", "df2"],
 )
-temp_str_1 = json.dumps(
+example_1 = json.dumps(
     {
         "Phone_Number": ["123-456-7890", "234-567-8901", "345-678-9012"],
         "Shipping_Address": ["123 Elm St", "456 Oak St", "789 Pine St"],
     },
     indent=4,
 )
-temp_str_2 = json.dumps(
+example_2 = json.dumps(
     {
         "Order_Notes": ["Urgent delivery", "Gift wrap", "No special requests"],
         "Payment_Method": ["Credit Card", "PayPal", "Bank Transfer"],
@@ -147,7 +148,7 @@ temp_str_2 = json.dumps(
 
 few_shot_sql_column_addition_examples = [
     {
-        "columns": f'{"{"+temp_str_1+"}"}',
+        "columns": f'{"{" + example_1 + "}"}',
         "schema": """CREATE TABLE customers (
     "Customer_ID" INTEGER,
     "First_Name" TEXT,
@@ -166,7 +167,7 @@ Customer_ID     First_Name      Last_Name       Email
         "output": 'ALTER TABLE customers ADD COLUMN "Phone_Number" TEXT, ADD COLUMN "Shipping_Address" TEXT;',
     },
     {
-        "columns": f'{"{"+temp_str_2+"}"}',
+        "columns": f'{"{" + example_2 + "}"}',
         "schema": """CREATE TABLE orders (
     "Order_ID" INTEGER,
     "Product" TEXT,
@@ -210,27 +211,7 @@ Only add columns that do not already exist in the table.
 Choose the appropriate data type for each column based on the provided sample data.
 Wrap each column name in double quotes (") to denote them as delimited identifiers.
 If the new column name contains spaces or special characters, use underscores (_) instead.
-Use the following formats:
-
-## Add the following non-mapped columns to the table_name table.
-Provided Columns in JSON Format:
-{format_str}
-
-SQL Query: ALTER TABLE table_name ADD COLUMN "column_name_1" data_type, ADD COLUMN "column_name_2" data_type;
-
-Existing Table Schema:
-CREATE TABLE table_name (
-    "column_name_1" data_type,
-    "column_name_2" data_type
-);
-
-/*
-3 rows from table_name table:
-column_name_1     column_name_2
-value_1           value_2
-value_3           value_4
-value_5           value_6
-*/
+ONLY generate the SQL query to add or alter the columns; No triple quotes or comments are required. No Prefix or Suffix is required.
 
 Few-Shot Examples:""",
     suffix="""Task:
@@ -254,20 +235,3 @@ few_shot_sql_column_addition_prompt = few_shot_sql_column_addition_prompt.partia
     "column_name_2": [sample_data_2]
 }""",
 )
-
-# temp_str_3 = json.dumps({"Phone_Number": ["123-456-7890", "234-567-8901", "345-678-9012"], "Shipping_Address": ["123 Elm St", "456 Oak St", "789 Pine St"]}, indent=4)
-
-# print(few_shot_sql_column_addition_prompt.format(columns=temp_str_3, schema='''CREATE TABLE customers (
-#     "Customer_ID" INTEGER,
-#     "First_Name" TEXT,
-#     "Last_Name" TEXT,
-#     "Email" TEXT
-# );
-
-# /*
-# 3 rows from customers table:
-# Customer_ID     First_Name      Last_Name       Email
-# 1               John            Smith
-# 2               Jane            Doe
-# 3               Doe             Johnson
-# */'''))
