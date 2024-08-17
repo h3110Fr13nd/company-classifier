@@ -4,6 +4,8 @@
 
 Company Classifier is a simple project designed to streamline MLOps for identifying company details from CSV files, classifying them, and saving them to an SQL-based database. This project leverages FastAPI for the web framework, Pandas for data manipulation, and SQLAlchemy for database interactions.
 
+![Flow Chart](./FlowChart.png)
+
 ## Features
 
 - Upload CSV files containing company data.
@@ -16,6 +18,7 @@ Company Classifier is a simple project designed to streamline MLOps for identify
 
 - Python 3.12
 - Poetry for dependency management
+- [Optional] Docker, Docker Compose
 
 ## Installation
 
@@ -26,13 +29,7 @@ Company Classifier is a simple project designed to streamline MLOps for identify
     cd company-classifier
     ```
 
-2. **Install dependencies:**
-
-    ```sh
-    poetry install
-    ```
-
-3. **Set up the environment variables:**
+2. **Set up the environment variables:**
 
     Create a [`.env`](.env) file in the root directory and add the following:
 
@@ -46,8 +43,15 @@ Company Classifier is a simple project designed to streamline MLOps for identify
 1. **Run the application:**
 
     ```sh
+    poetry install
     poetry run uvicorn app.main:app --host 0.0.0.0 --port 8000
     ```
+    ##### OR Using docker compose
+
+    ```sh
+    docker compose up
+    ```
+
 
 2. **Upload CSV files:**
 
@@ -56,7 +60,7 @@ Company Classifier is a simple project designed to streamline MLOps for identify
     Example using `curl`:
 
     ```sh
-    curl -X POST "http://127.0.0.1:8000/upload/" -F "file=@path/to/your/file.csv"
+    curl -X POST "http://0.0.0.0:8000/upload/" -F "file=@path/to/your/file.csv"
     ```
 
 ## Project Structure
@@ -70,9 +74,7 @@ app/
     __pycache__/
     db.py
     main.py
-    models.py
     prompts.py
-    schemas.py
     utils.py
 docker-compose.yaml
 Dockerfile
@@ -84,15 +86,14 @@ temp2.py
 test_csvs/
     companies1.csv
     companies2.csv
-    companies3.csv
-    companies4.csv
-    companies5.csv
+    ...
 ```
 
 ## Key Files
 
 - **[`app/main.py`](app/main.py):** Contains the FastAPI application and the `/upload/` endpoint.
-- **[`app/utils.py`](app/utils.py):** Contains utility functions for processing CSV files.
+- **[`app/utils.py`](app/utils.py):** Contains utility functions for processing CSV files, Langchain Chaining with DB, LLM, Parsers.
+- **[`app/prompts.py`](app/prompts.py):** Contains The Few Shot Prompt Templates, highly caliberated to give accurate Outputs.
 - **[`Dockerfile`](Dockerfile):** Docker configuration for containerizing the application.
 - **[`pyproject.toml`](pyproject.toml):** Project dependencies and configuration.
 

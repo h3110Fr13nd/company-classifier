@@ -1,9 +1,7 @@
 import os
 
 from dotenv import load_dotenv
-from langchain_community.utilities import SQLDatabase
-from sqlalchemy import Boolean, Column, String, create_engine
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 load_dotenv()
